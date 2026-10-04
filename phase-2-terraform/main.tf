@@ -23,6 +23,22 @@ provider "aws" {
   }
 }
 
+variable "primary_bucket_name" {
+  description = "Name of the primary S3 bucket"
+  type        = string
+  default     = "terraform-managed-lab"
+}
+
+variable "backup_bucket_name" {
+  description = "Name of the backup S3 bucket"
+  type        = string
+  default     = "terraform-managed-backup"
+}
+
 resource "aws_s3_bucket" "terraform_lab" {
-  bucket = "terraform-managed-lab"
+  bucket = var.primary_bucket_name
+}
+
+resource "aws_s3_bucket" "backup_lab" {
+  bucket = var.backup_bucket_name
 }
