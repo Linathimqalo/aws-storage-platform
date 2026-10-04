@@ -1,0 +1,11 @@
+{
+    "Users": [
+        {
+            "Path": "/",
+            "UserName": "storage-admin",
+            "UserId": "AIDATJOIP4BG976Z5I9Y",
+            "Arn": "arn:aws:iam::000000000000:user/storage-admin",
+            "CreateDate": "2026-10-04T19:07:04.014025+00:00"
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "Owner": {
+        "DisplayName": "floci",
+        "ID": "000000000000"
+    },
+    "Grants": [
+        {
+            "Grantee": {
+                "DisplayName": "floci",
+                "ID": "000000000000",
+                "Type": "CanonicalUser"
+            },
+            "Permission": "FULL_CONTROL"
+        }
+    ]
+}
