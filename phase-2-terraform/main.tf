@@ -22,3 +22,7 @@ provider "aws" {
     sts = "http://localhost:4566"
   }
 }
+
+resource "aws_s3_bucket" "terraform_lab" {
+  bucket = "terraform-managed-lab"
+}
