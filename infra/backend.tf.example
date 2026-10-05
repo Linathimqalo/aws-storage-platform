@@ -1,0 +1,20 @@
+terraform {
+  backend "s3" {
+    bucket = "terraform-state-storage"
+    key    = "storage-platform/terraform.tfstate"
+    region = "us-east-1"
+
+    # For Floci: uncomment and set credentials
+    # endpoint                    = "http://localhost:4566"
+    # access_key                  = "flociadmin"
+    # secret_key                  = "flociadmin"
+    # skip_credentials_validation = true
+    # skip_metadata_api_check     = true
+    # skip_region_validation      = true
+    # force_path_style            = true
+
+    # For real AWS: use environment credentials and add locking
+    # encrypt        = true
+    # dynamodb_table = "terraform-locks"
+  }
+}
