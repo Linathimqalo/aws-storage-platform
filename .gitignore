@@ -4,6 +4,12 @@
 *.tfstate.backup
 .terraform.lock.hcl
 
+# Audit reports (may contain findings — treat as sensitive)
+reports/*.json
+
+# Backend config with credentials
+infra/backend.tf
+
 # OS
 .DS_Store
 Thumbs.db
