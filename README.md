@@ -19,10 +19,11 @@ Full project documentation is in [`docs/`](./docs/). Start with
 
 ## Current state
 
-- Infrastructure: infra/ — single Terraform folder, remote state
-- Detection: scripts/audit-s3.sh
-- Reports: reports/ — audit output (gitignored)
-- Documentation: docs/
+- Infrastructure: `infra/` — single Terraform folder, remote state
+- Module: `infra/modules/secure-bucket/` — reusable secure bucket pattern
+- Detection: `scripts/audit-s3.sh`
+- Reports: `reports/` — audit output (gitignored)
+- Documentation: `docs/`
 
 ## Security posture
 
