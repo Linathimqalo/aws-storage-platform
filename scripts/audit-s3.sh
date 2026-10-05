@@ -4,7 +4,7 @@
 #   1. Block Public Access enabled (all four settings)
 #   2. Bucket policies with Allow + wildcard Principal
 
-REPORT_DIR="$(dirname "$0")/../reports"
+REPORT_DIR="$(cd "$(dirname "$0")/../reports" && pwd)"
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
 REPORT_FILE="${REPORT_DIR}/audit-${TIMESTAMP}.json"
 
