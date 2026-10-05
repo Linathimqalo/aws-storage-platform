@@ -3,6 +3,11 @@
 A progressive AWS engineering and security project built in Floci (local AWS emulator).
 Each phase adds a layer: manual provisioning → automation → security → operations.
 
+## Documentation
+
+Full project documentation is in [`docs/`](./docs/). Start with
+[`docs/README.md`](./docs/README.md) for a reading order.
+
 ## Phases
 
 | Phase | Focus | Location |
