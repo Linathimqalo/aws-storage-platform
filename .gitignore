@@ -4,7 +4,7 @@
 *.tfstate.backup
 .terraform.lock.hcl
 
-# Audit reports (may contain findings — treat as sensitive)
+# Audit reports (may contain sensitive findings)
 **/reports/*.json
 **/audit-reports/*.json
 
