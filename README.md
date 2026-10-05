@@ -9,7 +9,7 @@ Each phase adds a layer: manual provisioning → automation → security → ope
 |-------|-------|--------|
 | 1 | CLI fundamentals | [`phase-1-cli/`](./phase-1-cli/) |
 | 2 | Terraform automation | [`phase-2-terraform/`](./phase-2-terraform/) |
-| 3 | Security controls (in progress) | `phase-3-security/` |
+| 3 | Security controls & audit | [`phase-3-security/`](./phase-3-security/) |
 | 4 | Operations & detection (upcoming) | `phase-4-operations/` |
 
 ## Environment
