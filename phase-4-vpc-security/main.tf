@@ -362,3 +362,38 @@ resource "aws_network_acl" "data" {
     Tier = "private-data"
   }
 }
+
+# ============================================================
+# VPC Flow Logs
+# ============================================================
+
+resource "aws_s3_bucket" "flow_logs" {
+  bucket        = "vpc-flow-logs-lab"
+  force_destroy = true
+
+  tags = {
+    Name    = "vpc-flow-logs"
+    Purpose = "network-visibility"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "flow_logs" {
+  bucket = aws_s3_bucket.flow_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_flow_log" "vpc" {
+  vpc_id               = aws_vpc.main.id
+  traffic_type         = "ALL"
+  log_destination      = aws_s3_bucket.flow_logs.arn
+  log_destination_type = "s3"
+
+  tags = {
+    Name = "vpc-flow-log"
+  }
+}
+
