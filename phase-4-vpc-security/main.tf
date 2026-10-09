@@ -171,3 +171,101 @@ resource "aws_route_table_association" "private_data" {
   subnet_id      = aws_subnet.private_data.id
   route_table_id = aws_route_table.private_data.id
 }
+
+# ============================================================
+# Security Groups
+# ============================================================
+
+# Public tier — bastion host / load balancer
+resource "aws_security_group" "public" {
+  name        = "public-sg"
+  description = "Security group for public-facing resources"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "HTTPS from internet"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTP from internet (redirect to HTTPS)"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "SSH from VPC CIDR only (placeholder for bastion source)"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  egress {
+    description = "Allow all outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "public-sg"
+    Tier = "public"
+  }
+}
+
+# App tier — application servers
+resource "aws_security_group" "app" {
+  name        = "app-sg"
+  description = "Security group for application servers"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "Application traffic from public tier only"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.public.id]
+  }
+
+  egress {
+    description = "Allow all outbound (reaches internet via NAT)"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "app-sg"
+    Tier = "private-app"
+  }
+}
+
+# Data tier — databases
+resource "aws_security_group" "data" {
+  name        = "data-sg"
+  description = "Security group for database resources"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "Database traffic from app tier only"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app.id]
+  }
+
+  # No egress rules — databases don't initiate outbound connections
+
+  tags = {
+    Name = "data-sg"
+    Tier = "private-data"
+  }
+}
