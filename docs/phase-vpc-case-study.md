@@ -1,60 +1,69 @@
-AWS VPC Network Security — Case Study
-Three-tier VPC design with defence-in-depth network controls, built in Floci and managed with Terraform.
+# AWS VPC Network Security — Case Study
 
-Executive Summary
+*Three-tier VPC design with defence-in-depth network controls, built in Floci and managed with Terraform.*
+
+---
+
+## Executive Summary
+
 This project documents the design and build of a three-tier VPC in AWS, with layered network security controls — routing isolation, security groups, network ACLs, and VPC Flow Logs — all managed declaratively through Terraform.
 
 The environment segments resources into public, private-application, and private-data tiers. Each tier has a distinct routing profile and its own firewall controls. Tier-to-tier access is identity-based (security group references), not IP-based. The data tier has no internet route at all — the network-layer equivalent of physically isolating the database.
 
 After building the secure baseline, I deliberately introduced three misconfigurations to test detection:
 
-Opened SSH (port 22) on the public security group to the internet
+1. Opened SSH (port 22) on the public security group to the internet
+2. Opened PostgreSQL (port 5432) on the data security group to the internet
+3. Replaced the data NACL's app-subnet CIDR rule with `0.0.0.0/0`
 
-Opened PostgreSQL (port 5432) on the data security group to the internet
+A custom Bash audit script detected all three. Remediation was done two ways — first via CLI for speed, then via `terraform apply` to restore declarative state. The environment returned to 0 findings, and `terraform plan` returned "No changes."
 
-Replaced the data NACL's app-subnet CIDR rule with 0.0.0.0/0
+The project demonstrates the full network security lifecycle: **design → build → harden → break → detect → remediate → verify.**
 
-A custom Bash audit script detected all three. Remediation was done two ways — first via CLI for speed, then via terraform apply to restore declarative state. The environment returned to 0 findings, and terraform plan returned "No changes."
+---
 
-The project demonstrates the full network security lifecycle: design → build → harden → break → detect → remediate → verify.
-
-Architecture
-text
+## Architecture
 VPC: 10.0.0.0/16
 │
 ├── Public Subnet (10.0.1.0/24)
-│   ├── Route: 0.0.0.0/0 → Internet Gateway
-│   ├── Security Group: public-sg
-│   └── NACL: public-nacl
+│ ├── Route: 0.0.0.0/0 → Internet Gateway
+│ ├── Security Group: public-sg
+│ └── NACL: public-nacl
 │
 ├── Private App Subnet (10.0.10.0/24)
-│   ├── Route: 0.0.0.0/0 → NAT Gateway
-│   └── Security Group: app-sg (accepts traffic from public-sg only)
+│ ├── Route: 0.0.0.0/0 → NAT Gateway
+│ └── Security Group: app-sg (accepts traffic from public-sg only)
 │
 └── Private Data Subnet (10.0.20.0/24)
-    ├── Route: none (no internet access)
-    ├── Security Group: data-sg (accepts traffic from app-sg only, no egress)
-    └── NACL: data-nacl (only app subnet CIDR can reach)
-Why three tiers:
+├── Route: none (no internet access)
+├── Security Group: data-sg (accepts traffic from app-sg only, no egress)
+└── NACL: data-nacl (only app subnet CIDR can reach)
 
-Public — resources that must be reachable from the internet. Load balancers, bastion hosts. Minimal surface — only the ports that need to be open are open.
+text
 
-Private App — application servers. They need outbound internet (package updates, API calls), but shouldn't be reachable inbound.
+**Why three tiers:**
 
-Private Data — databases. No internet access in any direction. Reachable only from the application tier.
+- **Public** — resources that must be reachable from the internet. Load balancers, bastion hosts. Minimal surface — only the ports that need to be open are open.
+- **Private App** — application servers. They need outbound internet (package updates, API calls), but shouldn't be reachable inbound.
+- **Private Data** — databases. No internet access in any direction. Reachable only from the application tier.
 
 This is standard AWS architecture. It shows up in almost every production environment, and it's asked about in interviews.
 
-Security Design Decisions
-Decision 1: Publicness is determined by routes, not by name
-The public and private labels in AWS are informal. A subnet is "public" if and only if its route table has a route to an Internet Gateway.
+---
 
-The subnets themselves have different flags — map_public_ip_on_launch is true for the public subnet and false for the private subnets — but that flag is a convenience, not the definition. If you attach a route to an IGW to a subnet whose instances don't have public IPs, those instances still aren't reachable — but any instances you later assign public IPs to would be. And if a subnet has no route to the IGW, public IPs assigned to instances do nothing.
+## Security Design Decisions
 
-Why this matters: Misunderstanding the mechanism is a common source of exposures. "I set it to private" often means "I didn't map public IPs on launch" — which is not the same as "no internet access." The route table is the actual control.
+### Decision 1: Publicness is determined by routes, not by name
 
-Decision 2: The data tier has no default route
-hcl
+The *public* and *private* labels in AWS are informal. A subnet is "public" if and only if its route table has a route to an Internet Gateway.
+
+The subnets themselves have different flags — `map_public_ip_on_launch` is `true` for the public subnet and `false` for the private subnets — but that flag is a convenience, not the definition. If you attach a route to an IGW to a subnet whose instances don't have public IPs, those instances still aren't reachable — but any instances you later assign public IPs to would be. And if a subnet has no route to the IGW, public IPs assigned to instances do nothing.
+
+**Why this matters:** Misunderstanding the mechanism is a common source of exposures. "I set it to private" often means "I didn't map public IPs on launch" — which is not the same as "no internet access." The route table is the actual control.
+
+### Decision 2: The data tier has no default route
+
+```hcl
 resource "aws_route_table" "private_data" {
   vpc_id = aws_vpc.main.id
   # No 0.0.0.0/0 route
@@ -128,7 +137,7 @@ aws ec2 authorize-security-group-ingress \
   --cidr 0.0.0.0/0
 What this does: Adds a rule to public-sg allowing SSH from any IP on the internet.
 
-Why it matters: This is the single most-scanned AWS misconfiguration. Automated scanners find open SSH within minutes of exposure and attempt brute-force. The Phase 3 (Storage) project covered this same class of exposure with S3. It recurs here because it's the same underlying mistake — a default-safe configuration accidentally opened up.
+Why it matters: This is the single most-scanned AWS misconfiguration. Automated scanners find open SSH within minutes of exposure and attempt brute-force. The Storage project covered this same class of exposure with S3. It recurs here because it's the same underlying mistake — a default-safe configuration accidentally opened up.
 
 The correct baseline: The public-sg config declares SSH from 10.0.0.0/16 (the VPC CIDR, a placeholder for a real bastion/VPN source). Opening it to 0.0.0.0/0 is the misconfiguration.
 
@@ -200,7 +209,7 @@ The first version of the NACL check had a bug that the drill exposed. It flagged
 
 But public-nacl doesn't open those ports. It opens the ephemeral port range (1024–65535) for return traffic. Every sensitive port above 1024 falls into that range, so the check flagged all of them.
 
-The fix: Two classes of check:
+The fix: Two classes of check.
 
 For ports below 1024 (like SSH on 22): check whether the NACL rule covers the port (range query).
 
