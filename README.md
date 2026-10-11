@@ -12,10 +12,17 @@ Full project documentation is in [`docs/`](./docs/). Start with
 
 | Phase | Focus | Location |
 |-------|-------|----------|
-| 1 | CLI fundamentals | legacy/phase-1-cli/ |
-| 2 | Terraform automation | legacy/phase-2-terraform/ |
-| 3 | Security controls | legacy/phase-3-security/ |
-| 4 | Operations & detection | docs/phase-4.md |
+| 1 | CLI fundamentals | `legacy/phase-1-cli/` |
+| 2 | Terraform automation | `legacy/phase-2-terraform/` |
+| 3 | Security controls (S3/IAM/KMS) | `legacy/phase-3-security/` |
+| 4 | Detection and operations | `docs/phase-4.md` |
+| 5B | Terraform modules | `infra/modules/secure-bucket/` |
+| VPC | Network security (3-tier VPC) | `phase-4-vpc-security/` |
+
+## Case studies
+
+- [AWS Storage Platform](./docs/master-guide.md) — CLI → Terraform → security → detection
+- [AWS VPC Network Security](./docs/phase-vpc-case-study.md) — three-tier VPC with defence in depth
 
 ## Current state
 
